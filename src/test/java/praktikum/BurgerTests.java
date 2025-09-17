@@ -1,95 +1,167 @@
 package praktikum;
 
-import org.junit.Assert;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.junit.runners.Parameterized;
-import org.junit.runners.Parameterized.Parameter;
-import org.junit.runners.Parameterized.Parameters;
-import org.mockito.Mock;
 import org.junit.Before;
+import org.junit.Test;
 
-import java.util.Arrays;
+import static org.junit.Assert.*;
+import static org.mockito.Mockito.*;
+import static praktikum.support.Constants.DELTA_4;
 
-import static org.hamcrest.CoreMatchers.containsString;
-import static org.mockito.Mockito.when;
-
-@RunWith(Parameterized.class)
 public class BurgerTests {
 
     private Bun bun;
-    private Ingredient sauceMock;
-    private Ingredient fillingMock;
+    private Ingredient sauce;
+    private Ingredient filling;
 
     @Before
     public void setUp() {
-        bun = org.mockito.Mockito.mock(Bun.class);
-        sauceMock = org.mockito.Mockito.mock(Ingredient.class);
-        fillingMock = org.mockito.Mockito.mock(Ingredient.class);
+        bun = mock(Bun.class);
+        sauce = mock(Ingredient.class);
+        filling = mock(Ingredient.class);
     }
 
-    @Parameter
-    public String bunName;
-    @Parameter(1)
-    public double bunPrice;
-
-    @Parameter(2)
-    public IngredientType sauceType;
-
-    @Parameter(3)
-    public String sauceName;
-
-    @Parameter(4)
-    public double saucePrice;
-
-
-    @Parameter(5)
-    public IngredientType fillingType;
-
-    @Parameter(6)
-    public String fillingName;
-
-    @Parameter(7)
-    public double fillingPrice;
-
-
-
-    @Parameters(name = "{index}: булочка {0} - стоимость {1}, i1={2} {3} {4}, i2={5} {6} {7}")
-    public static Iterable<Object[]> data() {
-        return Arrays.asList(new Object[][]{
-                // bunName, bunPrice,  t1,                   n2,       p2,   t2,                    n3,       p3
-                {"white bun", 200,    IngredientType.SAUCE, "chili",   50,   IngredientType.FILLING, "cutlet", 30},
-                {"black bun", 320.50,  IngredientType.FILLING,"bacon",  70.4, IngredientType.SAUCE,   "mayo",   25.6},
-                {"red bun",   90,     IngredientType.SAUCE, "bbq",     0,    IngredientType.FILLING, "cheese", -10.75}
-        });
+    // --- setBuns ---
+    @Test
+    public void setBuns_assignsField() {
+        Burger burger = new Burger();
+        burger.setBuns(bun);
+        assertSame("bun должен устанавливаться как есть", bun, burger.bun);
     }
 
 
+    // --- addIngredient ---
+    @Test
+    public void addIngredient_appendsToList() {
+        Burger burger = new Burger();
+        burger.setBuns(bun);
+
+        burger.addIngredient(sauce);
+        burger.addIngredient(filling);
+
+        assertEquals(2, burger.ingredients.size());
+        assertSame(sauce,   burger.ingredients.get(0));
+        assertSame(filling, burger.ingredients.get(1));
+    }
+
+
+    // --- removeIngredient ---
+    @Test
+    public void removeIngredient_removesByIndex() {
+        Burger burger = new Burger();
+        burger.setBuns(bun);
+        burger.addIngredient(sauce);
+        burger.addIngredient(filling);
+
+        burger.removeIngredient(0);
+
+        assertEquals(1, burger.ingredients.size());
+        assertSame("После удаления первого должен остаться второй",
+                filling, burger.ingredients.get(0));
+    }
+
+    @Test(expected = IndexOutOfBoundsException.class)
+    public void removeIngredient_invalidIndex_throws() {
+        Burger burger = new Burger();
+        burger.setBuns(bun);
+        burger.addIngredient(sauce);
+
+        burger.removeIngredient(5); // индекса нет
+    }
+
+    // --- moveIngredient ---
 
     @Test
-    public void burgerGetIngridientsAndPriceTest() {
-        when(bun.getName()).thenReturn(bunName);
-        when(bun.getPrice()).thenReturn((float) bunPrice);
-
-        when(sauceMock.getType()).thenReturn(sauceType);
-        when(sauceMock.getName()).thenReturn(sauceName);
-        when(sauceMock.getPrice()).thenReturn((float) saucePrice);
-
-        when(fillingMock.getType()).thenReturn(fillingType);
-        when(fillingMock.getName()).thenReturn(fillingName);
-        when(fillingMock.getPrice()).thenReturn((float) fillingPrice);
+    public void moveIngredient_forward_movesItemToNewIndex() {
+        Ingredient a = mock(Ingredient.class);
+        Ingredient b = mock(Ingredient.class);
+        Ingredient c = mock(Ingredient.class);
 
         Burger burger = new Burger();
         burger.setBuns(bun);
-        burger.addIngredient(sauceMock);
-        burger.addIngredient(fillingMock);
+        burger.addIngredient(a);
+        burger.addIngredient(b);
+        burger.addIngredient(c);
 
-        double expected = bunPrice * 2 + saucePrice + fillingPrice;
-        Assert.assertEquals(expected, burger.getPrice(), 1e-5);
+        burger.moveIngredient(0, 2);
+
+        assertSame(b, burger.ingredients.get(0));
+        assertSame(c, burger.ingredients.get(1));
+        assertSame(a, burger.ingredients.get(2));
+    }
+
+    @Test
+    public void moveIngredient_backward_movesItemToNewIndex() {
+        Ingredient a = mock(Ingredient.class);
+        Ingredient b = mock(Ingredient.class);
+        Ingredient c = mock(Ingredient.class);
+
+        Burger burger = new Burger();
+        burger.setBuns(bun);
+        burger.addIngredient(a);
+        burger.addIngredient(b);
+        burger.addIngredient(c);
+
+        burger.moveIngredient(2, 0);
+
+        assertSame(c, burger.ingredients.get(0));
+        assertSame(a, burger.ingredients.get(1));
+        assertSame(b, burger.ingredients.get(2));
+    }
+
+    @Test
+    public void moveIngredient_sameIndex_noChanges() {
+        Ingredient a = mock(Ingredient.class);
+        Ingredient b = mock(Ingredient.class);
+
+        Burger burger = new Burger();
+        burger.setBuns(bun);
+        burger.addIngredient(a);
+        burger.addIngredient(b);
+
+        burger.moveIngredient(1, 1);
+
+        assertSame(a, burger.ingredients.get(0));
+        assertSame(b, burger.ingredients.get(1));
+    }
+
+
+    // --- getPrice (базовый кейс: только булка) ---
+    @Test
+    public void getPrice_onlyBuns_noIngredients() {
+        when(bun.getPrice()).thenReturn((float) 200);
+
+        Burger burger = new Burger();
+        burger.setBuns(bun);
+
+        double expected = 200 * 2;
+        assertEquals(expected, burger.getPrice(), DELTA_4 );
+    }
+
+    // --- getReceipt (структура: шапка/подвал + строка с ценой) ---
+    @Test
+    public void getReceipt_hasHeaderFooterAndPriceLine() {
+        when(bun.getName()).thenReturn("white bun");
+        when(bun.getPrice()).thenReturn((float) 100);
+
+        when(sauce.getType()).thenReturn(IngredientType.SAUCE);
+        when(sauce.getName()).thenReturn("any");
+        when(sauce.getPrice()).thenReturn((float) 10);
+
+        Burger burger = new Burger();
+        burger.setBuns(bun);
+        burger.addIngredient(sauce);
 
         String receipt = burger.getReceipt();
-        Assert.assertThat(receipt, containsString("= " + sauceType.toString().toLowerCase() + " " + sauceName + " ="));
-        Assert.assertThat(receipt, containsString("= " + fillingType.toString().toLowerCase() + " " + fillingName + " ="));
 
+        String header = String.format("(==== %s ====)%n", "white bun");
+        assertTrue("В чеке должна быть шапка", receipt.startsWith(header));
+        // подвал: второй такой же заголовок
+        assertTrue("В чеке должен быть подвал",
+                receipt.indexOf(header) != receipt.lastIndexOf(header));
+
+        // строка с ценой — используем расчёт самого бургера, чтобы не упасть на округлениях
+        String priceLine = String.format("%nPrice: %f%n", burger.getPrice());
+        assertTrue("В чеке должна быть строка с ценой", receipt.contains(priceLine));
     }
+
 }

@@ -8,6 +8,8 @@ import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameter;
 import org.junit.runners.Parameterized.Parameters;
 
+import static praktikum.support.Constants.DELTA_4;
+
 @RunWith(Parameterized.class)
 public class BunTests {
 
@@ -29,7 +31,7 @@ public class BunTests {
     @Test
     public void bunGetPriceAndNameTest() {
         Bun bun = new Bun(name, (float) price);
-        Assert.assertEquals(price, bun.getPrice(), 1e-4);
+        Assert.assertEquals(price, bun.getPrice(), DELTA_4);
         Assert.assertEquals(name, bun.getName());
     }
 }
